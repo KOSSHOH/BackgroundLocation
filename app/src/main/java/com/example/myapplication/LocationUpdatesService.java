@@ -7,7 +7,6 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.os.Binder;
@@ -30,15 +29,13 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 
-import java.util.Calendar;
-import java.util.Date;
 
 
 public class LocationUpdatesService extends Service {
 
     private static final String PACKAGE_NAME =
             "com.google.android.gms.location.sample.locationupdatesforegroundservice";
-    private static final String TAG = "resPOINT";
+    private static final String TAG = "resTAG";
     private static final String CHANNEL_ID = "channel_01";
     static final String ACTION_BROADCAST = PACKAGE_NAME + ".broadcast";
     static final String EXTRA_LOCATION = PACKAGE_NAME + ".location";
@@ -219,25 +216,17 @@ public class LocationUpdatesService extends Service {
 
     private void onNewLocation(Location location) {
         Log.d(TAG, "New location: " + location);
-        SharedPreferences sharedpreferences = getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
-        Date currentTime = Calendar.getInstance().getTime();
-        SharedPreferences.Editor editor = sharedpreferences.edit();
-        editor.putString("latitude", location.getLatitude() + "");
-        editor.putString("longitude", location.getLongitude() + "");
-        editor.putString("currentTime", currentTime.toString());
-        editor.apply();
+
 
         mLocation = location;
         Intent intent = new Intent(ACTION_BROADCAST);
         intent.putExtra(EXTRA_LOCATION, location);
         LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-        boolean k = serviceIsRunningInForeground(this);
-        Log.d("MRX", k + "");
-        if (k) {
+        if (serviceIsRunningInForeground(this)) {
             mNotificationManager.notify(NOTIFICATION_ID, getNotification());
             latitude = location.getLatitude();
             longitude = location.getLongitude();
-            SavetoServer();
+            sendData(mLocation);
         }
     }
 
@@ -268,7 +257,7 @@ public class LocationUpdatesService extends Service {
         return false;
     }
 
-    private void SavetoServer() {
+    private void sendData(Location location) {
         Toast.makeText(this, "Save to server", Toast.LENGTH_SHORT).show();
         Log.d("resMM", "Send to server");
         Log.d("resML", String.valueOf(latitude));
